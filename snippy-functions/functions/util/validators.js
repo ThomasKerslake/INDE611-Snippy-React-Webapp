@@ -1,16 +1,17 @@
 //Creating a helper functions to aid with validation of data inputs
 //Checking if 'email' matches that of the regular expression
-const isEmailValid = (email) => {
+const isEmailValid = (userEmail) => {
   const validEmailRegEx = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-  if (email.match(validEmailRegEx)) return true;
+  if (userEmail.match(validEmailRegEx)) return true;
   else return false;
 };
 //Checking for if the field is empty
-const isFieldEmpty = (string) => {
-  if (string.trim() === "") return true;
+const isFieldEmpty = (userInput) => {
+  if (userInput.trim() === "") return true;
   else return false;
 };
 
+//Export signup validation function
 exports.validateSignUp = (userData) => {
   //Validate input fields data
   let errors = {}; // Holds any error
@@ -36,7 +37,7 @@ exports.validateSignUp = (userData) => {
   };
 };
 
-//userLogin***
+//Export login validation function *userLogin
 exports.validateUserLogin = (userData) => {
   //Hold any errors
   let errors = {};

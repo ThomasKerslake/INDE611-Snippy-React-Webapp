@@ -1,4 +1,4 @@
-const { db } = require("../util/admin");
+const { fireAdmin, db } = require("../util/admin");
 const firebaseConfig = require("../util/firebaseConfig");
 
 const firebase = require("firebase");
@@ -6,6 +6,7 @@ firebase.initializeApp(firebaseConfig);
 
 const { validateSignUp, validateUserLogin } = require("../util/validators");
 
+//Export signup functionality
 exports.signUp = (req, res) => {
   const newUserInfo = {
     email: req.body.email,
@@ -13,9 +14,12 @@ exports.signUp = (req, res) => {
     confirmPassword: req.body.confirmPassword,
     userName: req.body.userName,
   };
-
+  //Destructuring
   const { valid, errors } = validateSignUp(newUserInfo);
   if (!valid) return res.status(400).json(errors);
+
+  //Used for the default user image
+  const noProfileImage = "default-profile-image.png";
 
   //Validate user account creation with userName uniqueness
   let token, userId;
@@ -47,6 +51,7 @@ exports.signUp = (req, res) => {
         userName: newUserInfo.userName,
         email: newUserInfo.email,
         createdAt: new Date().toISOString(),
+        imageUrl: `https://firebasestorage.googleapis.com/v0/b/${firebaseConfig.storageBucket}/o/${noProfileImage}?alt=media`,
         userId,
       };
       //Create / write to the user collection / add new user and assign doc to hold user creds
@@ -70,6 +75,7 @@ exports.signUp = (req, res) => {
     });
 };
 
+//Export user login functionality
 exports.userLogin = (req, res) => {
   const userLogin = {
     email: req.body.email,
@@ -99,4 +105,68 @@ exports.userLogin = (req, res) => {
         return res.status(500).json({ error: err.code });
       }
     });
+};
+
+exports.userImageUpload = (req, res) => {
+  const BusBoy = require("busboy");
+  const os = require("os");
+  const fs = require("fs");
+  const path = require("path");
+
+  const newBusBoy = new BusBoy({ headers: req.headers });
+
+  let fileNameOfImage;
+  let userImageToBeUploaded = {};
+
+  newBusBoy.on("file", (fieldname, file, filename, encoding, mimetype) => {
+    //Stopping any files other than jpg / png from being able to be uploaded
+    if (mimetype !== "image/jpeg" && mimetype !== "image/png") {
+      return res.status(400).json({
+        error:
+          "Sorry, you submitted the wrong file type. Please submit either a .jpg or .png",
+      });
+    }
+    //Getting the extension of file e.g '.png' -> check for multiple '.'
+    //in the file name, get the last occurrence of '.' -> (-1)
+    const extensionOfImage = filename.split(".")[
+      filename.split(".").length - 1
+    ];
+    //Creating a generated name for image -> adding back the extension
+    fileNameOfImage = `${Math.round(
+      Math.random() * 999999999999
+    )}.${extensionOfImage}`;
+
+    const filePath = path.join(os.tmpdir(), fileNameOfImage);
+    userImageToBeUploaded = { filePath, mimetype };
+    file.pipe(fs.createWriteStream(filePath));
+  });
+  //On finish -> upload users image
+  newBusBoy.on("finish", () => {
+    fireAdmin
+      .storage()
+      .bucket()
+      .upload(userImageToBeUploaded.filePath, {
+        resumable: false,
+        metadata: {
+          metadata: {
+            contentType: userImageToBeUploaded.mimetype,
+          },
+        },
+      })
+      //Construct snippy firebase storage bucket link
+      //-> add image name -> using alt=media to display image on link and not download
+      .then(() => {
+        const imageUrl = `https://firebasestorage.googleapis.com/v0/b/${firebaseConfig.storageBucket}/o/${fileNameOfImage}?alt=media`;
+        //Get logged in user -> add / update field imageUrl to hold users uploaded image (imageUrl)
+        return db.doc(`/users/${req.user.userName}`).update({ imageUrl });
+      })
+      .then(() => {
+        return res.json({ message: "Your image was uploaded successfully" });
+      })
+      .catch((err) => {
+        console.error(err);
+        return res.status(500).json({ error: err.code });
+      });
+  });
+  newBusBoy.end(req.rawBody); //End busboy
 };
