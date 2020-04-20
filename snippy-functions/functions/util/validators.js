@@ -54,3 +54,18 @@ exports.validateUserLogin = (userData) => {
     valid: Object.keys(errors).length === 0 ? true : false,
   };
 };
+
+//Use to remove spaces from ends or starts of user inputs
+exports.reduceUserInfo = (userData) => {
+  let userInformation = {};
+  if (!isFieldEmpty(userData.bio.trim())) userInformation.bio = userData.bio;
+  //Adding a 'http://' to a users website entry
+  if (!isFieldEmpty(userData.website.trim())) {
+    if (userData.website.trim().substring(0, 4) !== "http") {
+      userInformation.website = `http://${userData.website.trim()}`;
+    } else userInformation.website = userData.website;
+  }
+  if (!isFieldEmpty(userData.location.trim()))
+    userInformation.location = userData.location;
+  return userInformation;
+};

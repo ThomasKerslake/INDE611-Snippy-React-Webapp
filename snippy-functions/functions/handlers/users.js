@@ -4,7 +4,11 @@ const firebaseConfig = require("../util/firebaseConfig");
 const firebase = require("firebase");
 firebase.initializeApp(firebaseConfig);
 
-const { validateSignUp, validateUserLogin } = require("../util/validators");
+const {
+  validateSignUp,
+  validateUserLogin,
+  reduceUserInfo,
+} = require("../util/validators");
 
 //Export signup functionality
 exports.signUp = (req, res) => {
@@ -17,10 +21,8 @@ exports.signUp = (req, res) => {
   //Destructuring
   const { valid, errors } = validateSignUp(newUserInfo);
   if (!valid) return res.status(400).json(errors);
-
   //Used for the default user image
   const noProfileImage = "default-profile-image.png";
-
   //Validate user account creation with userName uniqueness
   let token, userId;
   db.doc(`/users/${newUserInfo.userName}`)
@@ -81,10 +83,8 @@ exports.userLogin = (req, res) => {
     email: req.body.email,
     password: req.body.password,
   };
-
   const { valid, errors } = validateUserLogin(userLogin);
   if (!valid) return res.status(400).json(errors);
-
   firebase
     .auth()
     .signInWithEmailAndPassword(userLogin.email, userLogin.password)
@@ -107,14 +107,13 @@ exports.userLogin = (req, res) => {
     });
 };
 
+//Give users ability to upload a profile picture
 exports.userImageUpload = (req, res) => {
   const BusBoy = require("busboy");
   const os = require("os");
   const fs = require("fs");
   const path = require("path");
-
   const newBusBoy = new BusBoy({ headers: req.headers });
-
   let fileNameOfImage;
   let userImageToBeUploaded = {};
 
@@ -169,4 +168,51 @@ exports.userImageUpload = (req, res) => {
       });
   });
   newBusBoy.end(req.rawBody); //End busboy
+};
+
+//Expanding a users detials
+exports.expandUserInfo = (req, res) => {
+  let infoFromUser = reduceUserInfo(req.body);
+  db.doc(`/users/${req.user.userName}`)
+    .update(infoFromUser)
+    .then(() => {
+      return res.json({
+        message: "Your details have been added / updated successfully.",
+      });
+    })
+    .catch((err) => {
+      console.error(err);
+      return res.status(500).json({ error: err.code });
+    });
+};
+
+//Grab all of a users information
+exports.authorisedUser = (req, res) => {
+  let responsData = {};
+  //Get logged in (authorised) user info
+  db.doc(`/users/${req.user.userName}`)
+    .get()
+    .then((doc) => {
+      //Check for its existance to avoid crashing
+      if (doc.exists) {
+        responsData.credentials = doc.data();
+        //Return a users likes where name on userHandle = current user (userName)
+        return db
+          .collection("likes")
+          .where("userHandle", "==", req.user.userName)
+          .get();
+      }
+    })
+    .then((data) => {
+      //Create array for likes within responsData
+      responsData.likes = [];
+      data.forEach((doc) => {
+        responsData.likes.push(doc.data());
+      });
+      return res.json(responsData);
+    })
+    .catch((err) => {
+      console.error(err);
+      return res.status(500).json({ error: err.code });
+    });
 };
