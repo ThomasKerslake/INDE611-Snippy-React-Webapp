@@ -27,14 +27,35 @@ exports.postSnip = (req, res) => {
   if (req.body.body.trim() === "") {
     return res.status(400).json({ body: "This body must not be empty." });
   }
+  if (req.body.snipTitle.trim() === "") {
+    return res
+      .status(400)
+      .json({ snipTitle: "Your snippet must have a title." });
+  }
+  if (req.body.snipDescription.trim() === "") {
+    return res.status(400).json({
+      snipDescription:
+        "Your snippet must have a discription of what the snippet is.",
+    });
+  }
+  if (req.body.snipType.trim() === "") {
+    return res.status(400).json({
+      snipType:
+        "Please select from one of the valid snippet types. (More are being added soon!)",
+    });
+  }
   const newSnip = {
+    snipTitle: req.body.snipTitle,
+    snipDescription: req.body.snipDescription,
     body: req.body.body,
+    snipType: req.body.snipType,
     userHandle: req.user.userName, //taken from middleware
     createdAt: new Date().toISOString(), //Set createdAt to JS date -> simplified ISO string format
     userProfileImage: req.user.imageUrl,
     numOfLikes: 0,
     numOfComments: 0,
   };
+
   //Send new snip to snips collection with response of the snip back to user
   db.collection("snips")
     .add(newSnip)

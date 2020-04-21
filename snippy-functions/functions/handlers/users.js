@@ -172,6 +172,7 @@ exports.userImageUpload = (req, res) => {
 
 //Expanding a users detials
 exports.expandUserInfo = (req, res) => {
+  //From validation of user info
   let infoFromUser = reduceUserInfo(req.body);
   db.doc(`/users/${req.user.userName}`)
     .update(infoFromUser)
@@ -209,7 +210,94 @@ exports.authorisedUser = (req, res) => {
       data.forEach((doc) => {
         responsData.likes.push(doc.data());
       });
+      //Get the collection 'notifications' -> where recipient of like / comment is == to current user
+      return db
+        .collection("notifications")
+        .where("recipient", "==", req.user.userName)
+        .orderBy("createdAt", "desc")
+        .limit(8)
+        .get();
+    })
+    .then((data) => {
+      //create array to hold notifications
+      responsData.notifications = [];
+      //for each entry return...
+      data.forEach((doc) => {
+        responsData.notifications.push({
+          recipient: doc.data().recipient,
+          sender: doc.data().sender,
+          read: doc.data().read,
+          snipId: doc.data().snipId,
+          type: doc.data().type,
+          createdAt: doc.data().createdAt,
+          notificationId: doc.id,
+        });
+      });
       return res.json(responsData);
+    })
+    .catch((err) => {
+      console.error(err);
+      return res.status(500).json({ error: err.code });
+    });
+};
+
+//Grab a users public details e.g snippet posts for there user page
+exports.getUserInfo = (req, res) => {
+  let responsData = {};
+  //Get the user
+  db.doc(`/users/${req.params.userName}`)
+    .get()
+    .then((doc) => {
+      if (doc.exists) {
+        //Getting all of the users snip posts
+        responsData.user = doc.data();
+        return db
+          .collection("snips")
+          .where("userHandle", "==", req.params.userName)
+          .orderBy("createdAt", "asc")
+          .get();
+      } else {
+        return res.status(404).json({ error: "User was not found." });
+      }
+    })
+    .then((data) => {
+      responsData.snips = [];
+      data.forEach((doc) => {
+        responsData.snips.push({
+          snipTitle: doc.data().snipTitle,
+          snipDescription: doc.data().snipDescription,
+          body: doc.data().body,
+          snipType: doc.data().snipType,
+          userHandle: doc.data().userHandle,
+          createdAt: doc.data().createdAt,
+          userProfileImage: doc.data().imageUrl,
+          numOfLikes: doc.data().numOfLikes,
+          numOfComments: doc.data().numOfComments,
+          snipId: doc.id,
+        });
+      });
+      return res.json(responsData);
+    })
+    .catch((err) => {
+      console.error(err);
+      return res.status(500).json({ error: err.code });
+    });
+};
+
+//Setting a user notifications to read once they open the drop down
+exports.setNotificationsAsRead = (req, res) => {
+  //Batch write used to updated multiple docs at once
+  let batch = db.batch();
+  req.body.forEach((notificationId) => {
+    const notification = db.doc(`/notifications/${notificationId}`);
+    batch.update(notification, { read: true }); //Updated all notifications 'read' to be true, not false
+  });
+  batch
+    .commit()
+    .then(() => {
+      return res.json({
+        message: "All of your notification have been set to read",
+      });
     })
     .catch((err) => {
       console.error(err);

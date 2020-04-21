@@ -14,11 +14,15 @@ let db = {
   ],
   snips: [
     {
-      userHandle: "userName",
-      body: "this is some body of text",
-      createdAt: "2020-04-15T11:46:01.018Z",
-      numOfLikes: 7,
-      numOfComments: 3,
+      snipTitle: "The title of the snippet",
+      snipDescription: "THis will be the description of the snippet",
+      body: "This will be the snippet",
+      snipType: "CSS",
+      userHandle: "user", //taken from middleware
+      createdAt: "2020-04-15T11:46:01.018Z", //Set createdAt to JS date -> simplified ISO string format
+      userProfileImage: "image/122525781515587",
+      numOfLikes: 14,
+      numOfComments: 5,
     },
   ],
   comments: [
@@ -26,6 +30,16 @@ let db = {
       userHandle: "user123",
       snipId: "qy5y42w4y45yuy3543tgy",
       body: "wow amazing, just not really ye",
+      createdAt: "2020-04-15T11:46:01.018Z",
+    },
+  ],
+  notifications: [
+    {
+      recipient: "user",
+      sender: "tony",
+      read: "true | false",
+      snipId: "t23t4bv13bvt334345tbqtvb3434vtc234",
+      type: "like | comment",
       createdAt: "2020-04-15T11:46:01.018Z",
     },
   ],
