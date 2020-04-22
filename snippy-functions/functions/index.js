@@ -65,10 +65,16 @@ exports.generateUserNotificationOnLike = functions
   .region("europe-west1")
   .firestore.document("likes/{id}")
   .onCreate((likeSnapshot) => {
-    db.doc(`/snips/${likeSnapshot.data().snipId}`) //Get snip -> chain likesnapshot
+    return db
+      .doc(`/snips/${likeSnapshot.data().snipId}`) //Get snip -> chain likesnapshot
       .get()
       .then((doc) => {
-        if (doc.exists) {
+        //Checking post existance AND if username (userhandle) liking the post not == same as post userHandle
+        //Send a notification (wont get a notification on liking own posts)
+        if (
+          doc.exists &&
+          doc.data().userHandle !== likeSnapshot.data().userHandle
+        ) {
           return db.doc(`/notifications/${likeSnapshot.id}`).set({
             recipient: doc.data().userHandle,
             sender: likeSnapshot.data().userHandle,
@@ -77,18 +83,10 @@ exports.generateUserNotificationOnLike = functions
             type: "like",
             createdAt: new Date().toISOString(),
           });
-        } else {
-          return console.log(
-            "error: Notification not sent, doc does not exist"
-          );
         }
-      })
-      .then(() => {
-        return;
       })
       .catch((err) => {
         console.error(err);
-        return;
       });
   });
 
@@ -98,11 +96,9 @@ exports.deleteUserNotificationOnUnlike = functions
   .firestore.document("likes/{id}")
   .onDelete((unlikeSnapshot) => {
     //unlikesnap.id == same as notification id
-    db.doc(`/notifications/${unlikeSnapshot.id}`)
+    return db
+      .doc(`/notifications/${unlikeSnapshot.id}`)
       .delete()
-      .then(() => {
-        return;
-      })
       .catch((err) => {
         console.error(err);
         return;
@@ -114,10 +110,15 @@ exports.generateUserNotificationOnComment = functions
   .region("europe-west1")
   .firestore.document("comments/{id}")
   .onCreate((commentSnapshot) => {
-    db.doc(`/snips/${commentSnapshot.data().snipId}`) //Get snip -> chain commentsnapshot
+    return db
+      .doc(`/snips/${commentSnapshot.data().snipId}`) //Get snip -> chain commentsnapshot
       .get()
       .then((doc) => {
-        if (doc.exists) {
+        if (
+          //Same setup as the like notification but for comment snapshots
+          doc.exists &&
+          doc.data().userHandle !== commentSnapshot.data().userHandle
+        ) {
           return db.doc(`/notifications/${commentSnapshot.id}`).set({
             recipient: doc.data().userHandle,
             sender: commentSnapshot.data().userHandle,
@@ -126,17 +127,77 @@ exports.generateUserNotificationOnComment = functions
             type: "comment",
             createdAt: new Date().toISOString(),
           });
-        } else {
-          return console.log(
-            "error: Notification not sent, doc does not exist"
-          );
         }
-      })
-      .then(() => {
-        return;
       })
       .catch((err) => {
         console.error(err);
         return;
+      });
+  });
+
+//Seting up a database trigger to watch for users changing their profile images
+// If change -> update the users snippet posts with their new image
+exports.watchForUserProfileImageChange = functions
+  .region("europe-west1")
+  .firestore.document("/users/{userId}") //Watch this doc for a change
+  .onUpdate((imageChange) => {
+    //Checking for just an image change with before and after
+    if (
+      imageChange.before.data().imageUrl !== imageChange.after.data().imageUrl
+    ) {
+      let batch = db.batch();
+      return db
+        .collection("snips")
+        .where("userHandle", "==", imageChange.before.data().userName)
+        .get()
+        .then((data) => {
+          data.forEach((doc) => {
+            const snip = db.doc(`/snips/${doc.id}`);
+            batch.update(snip, {
+              userProfileImage: imageChange.after.data().imageUrl,
+            });
+          });
+          return batch.commit();
+        });
+    } else return true;
+  });
+
+//Watching to see is a user deletes a snip -> delete snips comments / likes / notifications
+exports.watchForSnipDeletion = functions
+  .region("europe-west1")
+  .firestore.document("/snips/{snipId}") //Watch this doc for a change
+  .onDelete((snipSnapshot, context) => {
+    const snipId = context.params.snipId;
+    const batch = db.batch();
+    //Get collection 'likes' == snipId -> batch delete
+    return db
+      .collection("likes")
+      .where("snipId", "==", snipId)
+      .get()
+      .then((data) => {
+        data.forEach((doc) => {
+          batch.delete(db.doc(`/likes/${doc.id}`));
+        });
+        //get 'comments' collection -> for each delete the batch
+        return db.collection("comments").where("snipId", "==", snipId).get();
+      })
+      .then((data) => {
+        data.forEach((doc) => {
+          batch.delete(db.doc(`/comments/${doc.id}`));
+        });
+        //Get the notification collection -> delete batch
+        return db
+          .collection("notifications")
+          .where("snipId", "==", snipId)
+          .get();
+      })
+      .then((data) => {
+        data.forEach((doc) => {
+          batch.delete(db.doc(`/notifications/${doc.id}`));
+        });
+        return batch.commit();
+      })
+      .catch((err) => {
+        console.error(err);
       });
   });

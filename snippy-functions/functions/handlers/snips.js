@@ -12,9 +12,15 @@ exports.getAllSnips = (req, res) => {
         snips.push({
           //... not supported
           snipId: doc.id, //attaching each snip ID
+          snipTitle: doc.data().snipTitle,
+          snipDescription: doc.data().snipDescription,
           body: doc.data().body,
+          snipType: doc.data().snipType,
           userHandle: doc.data().userHandle,
           createdAt: doc.data().createdAt,
+          userProfileImage: doc.data().imageUrl,
+          numOfLikes: doc.data().numOfLikes,
+          numOfComments: doc.data().numOfComments,
         });
       });
       return res.json(snips);
@@ -111,7 +117,9 @@ exports.getOneSnip = (req, res) => {
 exports.commentOnSnip = (req, res) => {
   //If the body of the post is empty (user has not inputed anything) -> return error
   if (req.body.body.trim() === "") {
-    return res.status(400).json({ error: "This field must not be empty." });
+    return res
+      .status(400)
+      .json({ comment: "This comment field must not be empty." });
   }
   //Creating a comment json format
   // '.user' obtained though middleware
