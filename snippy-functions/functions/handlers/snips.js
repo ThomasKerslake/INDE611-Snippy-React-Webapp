@@ -18,7 +18,7 @@ exports.getAllSnips = (req, res) => {
           snipType: doc.data().snipType,
           userHandle: doc.data().userHandle,
           createdAt: doc.data().createdAt,
-          userProfileImage: doc.data().imageUrl,
+          userProfileImage: doc.data().userProfileImage,
           numOfLikes: doc.data().numOfLikes,
           numOfComments: doc.data().numOfComments,
         });
