@@ -97,15 +97,12 @@ exports.userLogin = (req, res) => {
       return res.json({ token });
     })
     .catch((err) => {
-      if (err.code === "auth/wrong-password") {
-        //403 unauthorised error code
-        return res
-          .status(403)
-          .json({ general: "Incorrect credentials, please try again." });
-      } else {
-        console.error(err);
-        return res.status(500).json({ error: err.code });
-      }
+      //user has entered wrong-password or wrong email
+      //403 unauthorised error code
+      console.error(err);
+      return res
+        .status(403)
+        .json({ general: "Incorrect credentials, please try again." });
     });
 };
 
