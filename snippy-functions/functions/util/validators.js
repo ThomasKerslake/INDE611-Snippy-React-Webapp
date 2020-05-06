@@ -65,7 +65,5 @@ exports.reduceUserInfo = (userData) => {
       userInformation.website = `http://${userData.website.trim()}`;
     } else userInformation.website = userData.website;
   }
-  if (!isFieldEmpty(userData.location.trim()))
-    userInformation.location = userData.location;
   return userInformation;
 };
