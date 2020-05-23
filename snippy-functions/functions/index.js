@@ -14,6 +14,7 @@ const {
   likeSnip,
   unlikeSnip,
   deleteUserSnip,
+  getAllSnipsByType,
 } = require("./handlers/snips");
 const {
   signUp,
@@ -30,6 +31,8 @@ const {
 app.post("/snip", AuthMiddlewareFB, postSnip);
 //Retriving the stored snips from snips route
 app.get("/snips", getAllSnips);
+//Retriving the stored snips from snips route from given snip type
+app.get("/snips/:snipType", getAllSnipsByType);
 //Getting a single snip post
 app.get("/snip/:snipId", getOneSnip);
 //Posting new comments to a snip

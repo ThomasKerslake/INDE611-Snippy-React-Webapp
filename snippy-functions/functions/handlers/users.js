@@ -253,7 +253,7 @@ exports.getUserInfo = (req, res) => {
         return db
           .collection("snips")
           .where("userHandle", "==", req.params.userName)
-          .orderBy("createdAt", "asc")
+          .orderBy("createdAt", "desc")
           .get();
       } else {
         return res.status(404).json({ error: "User was not found." });
@@ -269,7 +269,7 @@ exports.getUserInfo = (req, res) => {
           snipType: doc.data().snipType,
           userHandle: doc.data().userHandle,
           createdAt: doc.data().createdAt,
-          userProfileImage: doc.data().imageUrl,
+          userProfileImage: doc.data().userProfileImage,
           numOfLikes: doc.data().numOfLikes,
           numOfComments: doc.data().numOfComments,
           snipId: doc.id,

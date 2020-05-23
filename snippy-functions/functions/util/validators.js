@@ -58,7 +58,6 @@ exports.validateUserLogin = (userData) => {
 //Use to remove spaces from ends or starts of user inputs
 exports.reduceUserInfo = (userData) => {
   let userInformation = {};
-  if (!isFieldEmpty(userData.bio.trim())) userInformation.bio = userData.bio;
   //Adding a 'http://' to a users website entry
   if (!isFieldEmpty(userData.website.trim())) {
     if (userData.website.trim().substring(0, 4) !== "http") {

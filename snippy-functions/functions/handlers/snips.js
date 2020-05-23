@@ -77,6 +77,37 @@ exports.postSnip = (req, res) => {
     });
 };
 
+//Used to filter snippet posts by there post types
+exports.getAllSnipsByType = (req, res) => {
+  let snips = [];
+  db.collection("snips")
+    .where("snipType", "==", req.params.snipType)
+    .orderBy("createdAt", "desc")
+    .get()
+    .then((data) => {
+      data.forEach((doc) => {
+        snips.push({
+          snipTitle: doc.data().snipTitle,
+          snipDescription: doc.data().snipDescription,
+          body: doc.data().body,
+          snipType: doc.data().snipType,
+          userHandle: doc.data().userHandle,
+          createdAt: doc.data().createdAt,
+          userProfileImage: doc.data().userProfileImage,
+          numOfLikes: doc.data().numOfLikes,
+          numOfComments: doc.data().numOfComments,
+          snipId: doc.id,
+        });
+      });
+      return res.json(snips);
+    })
+    .catch((err) => {
+      //error 500, server error
+      res.status(500).json({ error: err.code });
+      console.error(err);
+    });
+};
+
 //Get a single snippet and all its data
 exports.getOneSnip = (req, res) => {
   let snipData = {};
