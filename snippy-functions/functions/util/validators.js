@@ -1,10 +1,3 @@
-//Creating a helper functions to aid with validation of data inputs
-//Checking if 'email' matches that of the regular expression
-const isEmailValid = (userEmail) => {
-  const validEmailRegEx = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-  if (userEmail.match(validEmailRegEx)) return true;
-  else return false;
-};
 //Checking for if the field is empty
 const isFieldEmpty = (userInput) => {
   if (userInput.trim() === "") return true;
@@ -65,4 +58,12 @@ exports.reduceUserInfo = (userData) => {
     } else userInformation.website = userData.website;
   }
   return userInformation;
+};
+
+//Creating a helper functions to aid with validation of data inputs
+//Checking if 'email' matches that of the regular expression
+const isEmailValid = (userEmail) => {
+  const validEmailRegEx = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+  if (userEmail.match(validEmailRegEx)) return true;
+  else return false;
 };

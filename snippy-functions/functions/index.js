@@ -12,14 +12,14 @@ const {
   getAllSnips,
   getOneSnip,
   postSnip,
-  commentOnSnip,
-  likeSnip,
-  unlikeSnip,
+  userCommentOnSnip,
+  userLikeSnip,
+  userUnlikeSnip,
   deleteUserSnip,
   getAllSnipsByType,
 } = require("./handlers/snips");
 const {
-  signUp,
+  userSignup,
   userLogin,
   userImageUpload,
   expandUserInfo,
@@ -38,16 +38,16 @@ app.get("/snips/:snipType", getAllSnipsByType);
 //Getting a single snip post
 app.get("/snip/:snipId", getOneSnip);
 //Posting new comments to a snip
-app.post("/snip/:snipId/comment", AuthMiddlewareFB, commentOnSnip);
+app.post("/snip/:snipId/comment", AuthMiddlewareFB, userCommentOnSnip);
 //likes for a snip
-app.get("/snip/:snipId/like", AuthMiddlewareFB, likeSnip);
+app.get("/snip/:snipId/like", AuthMiddlewareFB, userLikeSnip);
 //Unliking a snip
-app.get("/snip/:snipId/unlike", AuthMiddlewareFB, unlikeSnip);
+app.get("/snip/:snipId/unlike", AuthMiddlewareFB, userUnlikeSnip);
 //Give a user the ablity to delete one of their snips
 app.delete("/snip/:snipId", AuthMiddlewareFB, deleteUserSnip);
 
 //User account creation / sign up
-app.post("/signup", signUp);
+app.post("/signup", userSignup);
 //Setting up the login
 app.post("/login", userLogin);
 //Setting up user image uploading

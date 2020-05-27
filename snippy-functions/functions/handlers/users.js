@@ -11,7 +11,7 @@ const {
 } = require("../util/validators");
 
 //Export signup functionality
-exports.signUp = (req, res) => {
+exports.userSignup = (req, res) => {
   const newUserInfo = {
     email: req.body.email,
     password: req.body.password,

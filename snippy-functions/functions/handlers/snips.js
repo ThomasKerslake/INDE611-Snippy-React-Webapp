@@ -144,53 +144,8 @@ exports.getOneSnip = (req, res) => {
     });
 };
 
-//Comment on a snip
-exports.commentOnSnip = (req, res) => {
-  //If the body of the post is empty (user has not inputed anything) -> return error
-  if (req.body.body.trim() === "") {
-    return res
-      .status(400)
-      .json({ comment: "This comment field must not be empty." });
-  }
-  //Creating a comment json format
-  // '.user' obtained though middleware
-  const newUserComment = {
-    body: req.body.body,
-    createdAt: new Date().toISOString(),
-    snipId: req.params.snipId,
-    userHandle: req.user.userName,
-    userProfileImage: req.user.imageUrl,
-  };
-  //Check if the snippet exists
-  db.doc(`/snips/${req.params.snipId}`) //getting this snips id
-    .get()
-    .then((doc) => {
-      if (!doc.exists) {
-        return res.status(404).json({
-          error:
-            "Sorry, this snippet was not found. (It may not exist anymore!) :(",
-        });
-      }
-      //If found increment our number of comments as a new comment is added
-      return doc.ref.update({ numOfComments: doc.data().numOfComments + 1 });
-    })
-    .then(() => {
-      //add our comment formated with newUserComment
-      return db.collection("comments").add(newUserComment);
-    })
-    .then(() => {
-      res.json(newUserComment); //Show the comment to user
-    })
-    .catch((err) => {
-      res
-        .status(500)
-        .json({ error: "Sorry! Something seems to have gone wrong." });
-      console.error(err);
-    });
-};
-
 //Like a snippet
-exports.likeSnip = (req, res) => {
+exports.userLikeSnip = (req, res) => {
   //Setting up variables that need to be reused alot
   //Get from collection 'likes' where userhandle of the like is equal to user 'liking' the snip
   const likeDoc = db
@@ -248,7 +203,7 @@ exports.likeSnip = (req, res) => {
 };
 
 //Used to unlike a snip post
-exports.unlikeSnip = (req, res) => {
+exports.userUnlikeSnip = (req, res) => {
   //Setting up variables that need to be reused alot
   //Get from collection 'likes' where userhandle of the like is equal to user 'liking' the snip
   const likeDoc = db
@@ -294,6 +249,51 @@ exports.unlikeSnip = (req, res) => {
     .catch((err) => {
       console.error(err);
       res.status(500).json({ error: err.code });
+    });
+};
+
+//Comment on a snip
+exports.userCommentOnSnip = (req, res) => {
+  //If the body of the post is empty (user has not inputed anything) -> return error
+  if (req.body.body.trim() === "") {
+    return res
+      .status(400)
+      .json({ comment: "This comment field must not be empty." });
+  }
+  //Creating a comment json format
+  // '.user' obtained though middleware
+  const newUserComment = {
+    body: req.body.body,
+    createdAt: new Date().toISOString(),
+    snipId: req.params.snipId,
+    userHandle: req.user.userName,
+    userProfileImage: req.user.imageUrl,
+  };
+  //Check if the snippet exists
+  db.doc(`/snips/${req.params.snipId}`) //getting this snips id
+    .get()
+    .then((doc) => {
+      if (!doc.exists) {
+        return res.status(404).json({
+          error:
+            "Sorry, this snippet was not found. (It may not exist anymore!) :(",
+        });
+      }
+      //If found increment our number of comments as a new comment is added
+      return doc.ref.update({ numOfComments: doc.data().numOfComments + 1 });
+    })
+    .then(() => {
+      //add our comment formated with newUserComment
+      return db.collection("comments").add(newUserComment);
+    })
+    .then(() => {
+      res.json(newUserComment); //Show the comment to user
+    })
+    .catch((err) => {
+      res
+        .status(500)
+        .json({ error: "Sorry! Something seems to have gone wrong." });
+      console.error(err);
     });
 };
 
