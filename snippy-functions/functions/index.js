@@ -2,7 +2,9 @@ const functions = require("firebase-functions");
 const { db } = require("./util/admin");
 const express = require("express");
 const app = express();
-
+//Set app to use cors for headers / allowing requests
+const cors = require("cors");
+app.use(cors());
 //middleware
 const AuthMiddlewareFB = require("./util/fireBaseAuth");
 
